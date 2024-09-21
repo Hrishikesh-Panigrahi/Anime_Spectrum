@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "./proto";
+ 
+package anime;
+
+message AnimeRequest {
+  string genre = 1;
+  int32 limit = 2;
+}
+
+message AnimeResponse {
+  repeated string anime_titles = 1;
+}
+
+service AnimeService {
+  rpc GetAnimeSuggestions (AnimeRequest) returns (AnimeResponse);
+}
