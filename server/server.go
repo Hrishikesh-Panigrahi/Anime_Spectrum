@@ -3,10 +3,15 @@ package server
 import (
 	"context"
 	"fmt"
-	api "github.com/Hrishikesh-Panigrahi/Anime_Spectrum/proto"
-	"google.golang.org/grpc"
 	"log"
 	"net"
+
+	api "github.com/Hrishikesh-Panigrahi/Anime_Spectrum/proto"
+	"google.golang.org/grpc"
+)
+
+const(
+	port = ":8080"
 )
 
 type AnimeServer struct {
@@ -32,7 +37,7 @@ func (s *AnimeServer) GetAnimeSuggestions(ctx context.Context, req *api.AnimeReq
 
 // RunServer starts the gRPC server.
 func RunServer() {
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
@@ -40,7 +45,7 @@ func RunServer() {
 	grpcServer := grpc.NewServer()
 	api.RegisterAnimeServiceServer(grpcServer, &AnimeServer{})
 
-	fmt.Println("gRPC server is running on port 50051...")
+	fmt.Println("gRPC server is running on port 8080...")
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
