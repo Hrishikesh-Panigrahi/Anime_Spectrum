@@ -1,18 +1,36 @@
 syntax = "proto3";
 
 option go_package = "./proto";
- 
+
 package anime;
 
+//AnimeRequest is the Request message to get anime suggestions
 message AnimeRequest {
-  string genre = 1;
-  int32 limit = 2;
+  string genre = 1;           
+  int32 limit = 2;            
+  string sort_by = 3;         
+  bool include_ratings = 4;
+  bool include_reviews = 5;   
 }
 
+// AnimeDetail is the Response message containing anime details
+message AnimeDetail {
+  string title = 1;           
+  string description = 2;     
+  string genre = 3;           
+  float rating = 4;           
+  string release_date = 5;    
+  repeated string reviews = 6;
+}
+
+// AnimeRespone is the Response message containing a list of anime details
 message AnimeResponse {
-  repeated string anime_titles = 1;
+  repeated AnimeDetail anime_details = 1;  
 }
 
-service AnimeService {
+// AnimeService provides recommendations based on user preferences
+service AnimeService {  
   rpc GetAnimeSuggestions (AnimeRequest) returns (AnimeResponse);
+
+  rpc StreamAnimeSuggestions (AnimeRequest) returns (stream AnimeDetail);
 }

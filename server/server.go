@@ -5,31 +5,86 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sort"
 
 	api "github.com/Hrishikesh-Panigrahi/Anime_Spectrum/proto"
 	"google.golang.org/grpc"
 )
 
-const(
+const (
 	port = ":8080"
 )
 
+// AnimeServer implements the AnimeService gRPC server
 type AnimeServer struct {
 	api.UnimplementedAnimeServiceServer
 }
 
+type Anime struct {
+	Title       string
+	Description string
+	Genre       string
+	Rating      float32
+	ReleaseDate string
+	Reviews     []string
+}
+
+// GetAnimeSuggestions is the unary RPC to get anime suggestions based on the request
 func (s *AnimeServer) GetAnimeSuggestions(ctx context.Context, req *api.AnimeRequest) (*api.AnimeResponse, error) {
 
-	animeList := []string{"Naruto", "One Piece", "Attack on Titan"}
+	// Sample anime data
+	animeDB := []Anime{
+		{Title: "Naruto", Genre: "action", Rating: 8.3, ReleaseDate: "2002", Reviews: []string{"Epic", "Great Story"}},
+		{Title: "One Piece", Genre: "action", Rating: 9.0, ReleaseDate: "1999", Reviews: []string{"Adventure packed", "Exciting"}},
+		{Title: "Attack on Titan", Genre: "action", Rating: 9.1, ReleaseDate: "2013", Reviews: []string{"Mind-blowing", "Intense"}},
+		{Title: "My Hero Academia", Genre: "action", Rating: 7.9, ReleaseDate: "2016", Reviews: []string{"Fun", "Inspiring"}},
+		{Title: "Your Lie in April", Genre: "romance", Rating: 8.7, ReleaseDate: "2014", Reviews: []string{"Heartbreaking", "Beautiful"}},
+	}
 
-	if req.Genre == "action" {
-		animeList = append(animeList, "My Hero Academia")
-	} else if req.Genre == "romance" {
-		animeList = append(animeList, "Your Lie in April")
+	var filteredAnime []Anime
+	for _, anime := range animeDB {
+		if req.Genre == "" || anime.Genre == req.Genre {
+			filteredAnime = append(filteredAnime, anime)
+		}
+	}
+
+	switch req.SortBy {
+	case "rating":
+		sort.Slice(filteredAnime, func(i, j int) bool {
+			return filteredAnime[i].Rating > filteredAnime[j].Rating
+		})
+	case "release_date":
+		sort.Slice(filteredAnime, func(i, j int) bool {
+			return filteredAnime[i].ReleaseDate > filteredAnime[j].ReleaseDate
+		})
+	}
+
+	if req.Limit > int32(len(filteredAnime)) {
+		req.Limit = int32(len(filteredAnime))
+	}
+	filteredAnime = filteredAnime[:req.Limit]
+
+	var animeDetails []*api.AnimeDetail
+	for _, anime := range filteredAnime {
+		animeDetail := &api.AnimeDetail{
+			Title:       anime.Title,
+			Description: anime.Description,
+			Genre:       anime.Genre,
+			ReleaseDate: anime.ReleaseDate,
+		}
+		
+		if req.IncludeRatings {
+			animeDetail.Rating = anime.Rating
+		}
+		if req.IncludeReviews {
+			animeDetail.Reviews = anime.Reviews
+		}
+
+		animeDetails = append(animeDetails, animeDetail)
 	}
 
 	res := &api.AnimeResponse{
-		AnimeTitles: animeList[:req.Limit],
+		AnimeDetails: animeDetails,
 	}
 
 	return res, nil

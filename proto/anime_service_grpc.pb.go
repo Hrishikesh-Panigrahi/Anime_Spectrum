@@ -19,14 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AnimeService_GetAnimeSuggestions_FullMethodName = "/anime.AnimeService/GetAnimeSuggestions"
+	AnimeService_GetAnimeSuggestions_FullMethodName    = "/anime.AnimeService/GetAnimeSuggestions"
+	AnimeService_StreamAnimeSuggestions_FullMethodName = "/anime.AnimeService/StreamAnimeSuggestions"
 )
 
 // AnimeServiceClient is the client API for AnimeService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// AnimeService provides recommendations based on user preferences
 type AnimeServiceClient interface {
 	GetAnimeSuggestions(ctx context.Context, in *AnimeRequest, opts ...grpc.CallOption) (*AnimeResponse, error)
+	StreamAnimeSuggestions(ctx context.Context, in *AnimeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AnimeDetail], error)
 }
 
 type animeServiceClient struct {
@@ -47,11 +51,33 @@ func (c *animeServiceClient) GetAnimeSuggestions(ctx context.Context, in *AnimeR
 	return out, nil
 }
 
+func (c *animeServiceClient) StreamAnimeSuggestions(ctx context.Context, in *AnimeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AnimeDetail], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &AnimeService_ServiceDesc.Streams[0], AnimeService_StreamAnimeSuggestions_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[AnimeRequest, AnimeDetail]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type AnimeService_StreamAnimeSuggestionsClient = grpc.ServerStreamingClient[AnimeDetail]
+
 // AnimeServiceServer is the server API for AnimeService service.
 // All implementations must embed UnimplementedAnimeServiceServer
 // for forward compatibility.
+//
+// AnimeService provides recommendations based on user preferences
 type AnimeServiceServer interface {
 	GetAnimeSuggestions(context.Context, *AnimeRequest) (*AnimeResponse, error)
+	StreamAnimeSuggestions(*AnimeRequest, grpc.ServerStreamingServer[AnimeDetail]) error
 	mustEmbedUnimplementedAnimeServiceServer()
 }
 
@@ -64,6 +90,9 @@ type UnimplementedAnimeServiceServer struct{}
 
 func (UnimplementedAnimeServiceServer) GetAnimeSuggestions(context.Context, *AnimeRequest) (*AnimeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAnimeSuggestions not implemented")
+}
+func (UnimplementedAnimeServiceServer) StreamAnimeSuggestions(*AnimeRequest, grpc.ServerStreamingServer[AnimeDetail]) error {
+	return status.Errorf(codes.Unimplemented, "method StreamAnimeSuggestions not implemented")
 }
 func (UnimplementedAnimeServiceServer) mustEmbedUnimplementedAnimeServiceServer() {}
 func (UnimplementedAnimeServiceServer) testEmbeddedByValue()                      {}
@@ -104,6 +133,17 @@ func _AnimeService_GetAnimeSuggestions_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AnimeService_StreamAnimeSuggestions_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(AnimeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(AnimeServiceServer).StreamAnimeSuggestions(m, &grpc.GenericServerStream[AnimeRequest, AnimeDetail]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type AnimeService_StreamAnimeSuggestionsServer = grpc.ServerStreamingServer[AnimeDetail]
+
 // AnimeService_ServiceDesc is the grpc.ServiceDesc for AnimeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,6 +156,12 @@ var AnimeService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AnimeService_GetAnimeSuggestions_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamAnimeSuggestions",
+			Handler:       _AnimeService_StreamAnimeSuggestions_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "proto/anime_service.proto",
 }
