@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	api "github.com/Hrishikesh-Panigrahi/Anime_Spectrum/proto"
@@ -36,20 +37,20 @@ func main() {
 		log.Fatalf("Error when calling GetAnimeSuggestions: %v", err)
 	}
 
+	fmt.Println("======== Anime Suggestions ========")
 	for _, anime := range res.AnimeDetails {
 		fmt.Printf("Title: %s\n", anime.Title)
-		fmt.Printf("Description: %s\n", anime.Description)
 		fmt.Printf("Genre: %s\n", anime.Genre)
 		fmt.Printf("Rating: %.1f\n", anime.Rating)
 		fmt.Printf("Release Date: %s\n", anime.ReleaseDate)
+		fmt.Printf("Description: %s\n", anime.Description)
 
 		if len(anime.Reviews) > 0 {
-			fmt.Println("Reviews:")
-			for _, review := range anime.Reviews {
-				fmt.Printf("- %s\n", review)
-			}
+			fmt.Print("Reviews:")
+			fmt.Printf("%s\n", strings.Join(anime.Reviews, "\n \t"))
 		}
-		fmt.Println("-----")
+		fmt.Println("-----------------------------------")
 	}
+	fmt.Println("===================================")
 
 }

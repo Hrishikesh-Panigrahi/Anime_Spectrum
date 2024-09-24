@@ -39,6 +39,11 @@ func (s *AnimeServer) GetAnimeSuggestions(ctx context.Context, req *api.AnimeReq
 		{Title: "Attack on Titan", Genre: "action", Rating: 9.1, ReleaseDate: "2013", Reviews: []string{"Mind-blowing", "Intense"}},
 		{Title: "My Hero Academia", Genre: "action", Rating: 7.9, ReleaseDate: "2016", Reviews: []string{"Fun", "Inspiring"}},
 		{Title: "Your Lie in April", Genre: "romance", Rating: 8.7, ReleaseDate: "2014", Reviews: []string{"Heartbreaking", "Beautiful"}},
+		{Title: "Steins;Gate", Genre: "sci-fi", Rating: 9.1, ReleaseDate: "2011", Reviews: []string{"Mind-bending", "Sci-fi masterpiece"}},
+		{Title: "Death Note", Genre: "thriller", Rating: 9.0, ReleaseDate: "2006", Reviews: []string{"Thrilling", "Psychological battle"}},
+		{Title: "Fullmetal Alchemist: Brotherhood", Genre: "action", Rating: 9.2, ReleaseDate: "2009", Reviews: []string{"Masterpiece", "Excellent characters"}},
+		{Title: "Clannad", Genre: "romance", Rating: 8.5, ReleaseDate: "2007", Reviews: []string{"Emotional", "Heartwarming"}},
+		{Title: "Cowboy Bebop", Genre: "sci-fi", Rating: 8.9, ReleaseDate: "1998", Reviews: []string{"Cool and stylish", "Timeless"}},
 	}
 
 	var filteredAnime []Anime
@@ -72,7 +77,7 @@ func (s *AnimeServer) GetAnimeSuggestions(ctx context.Context, req *api.AnimeReq
 			Genre:       anime.Genre,
 			ReleaseDate: anime.ReleaseDate,
 		}
-		
+
 		if req.IncludeRatings {
 			animeDetail.Rating = anime.Rating
 		}
